@@ -34,9 +34,41 @@ with pdfplumber.open(pdf_path) as pdf:
                 sizer[int(size)]=1
                 key.append(int(size))
 
-        print(sizer)
+        # print(sizer)
+
+        body=0
+        head=0
         for i,j in enumerate(sizer):
-            print(j)
+            if sizer[j]>body:body=j
+            if j>head:head=j
+
+        # print(body,head,sep='........')
+
+        for w in words:
+            text = w["text"]
+            font = w["fontname"]
+            size = w["size"]
+            x0 = w["x0"]
+            top = w["top"]
+            if not (header_limit < w["top"] < footer_limit):
+                continue
+            if int(size)<5:continue
+
+            if int(size)==head or ':' in text:
+                print(f'\x1b[032m{text}\x1b[0m',end=' ')
+            elif int(size)==body:
+                print(f'\x1b[031m{text}\x1b[0m',end=' ')
+            else:
+                print(f'\x1b[033m{text}\x1b[0m',end=' ')
+
+        
+
+
+
+           
+
+
+
 
             
             
