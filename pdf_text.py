@@ -1,6 +1,6 @@
 import pdfplumber
 
-pdf_path = "sample.pdf"
+pdf_path = "s2.pdf"
 
 full_content=[]
 
@@ -42,7 +42,7 @@ with pdfplumber.open(pdf_path) as pdf:
             if sizer[j]>body:body=j
             if j>head:head=j
 
-        # print(body,head,sep='........')
+        print(body,head,sep='........')
 
         for w in words:
             text = w["text"]
@@ -50,14 +50,15 @@ with pdfplumber.open(pdf_path) as pdf:
             size = w["size"]
             x0 = w["x0"]
             top = w["top"]
+            # print(font)cl
             if not (header_limit < w["top"] < footer_limit):
                 continue
             if int(size)<5:continue
-
-            if int(size)==head or ':' in text:
-                print(f'\x1b[032m{text}\x1b[0m',end=' ')
-            elif int(size)==body:
+            
+            if int(size)==body:
                 print(f'\x1b[031m{text}\x1b[0m',end=' ')
+            elif (int(size)==head or ':' in text or 'Bold' in font):
+                print(f'\x1b[032m{text}\x1b[0m',end=' ')
             else:
                 print(f'\x1b[033m{text}\x1b[0m',end=' ')
 
