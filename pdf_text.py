@@ -1,17 +1,18 @@
 import pdfplumber
 
-pdf_path = "s2.pdf"
+pdf_path = "s3.pdf"
 
 full_content=[]
 
 with pdfplumber.open(pdf_path) as pdf:
     for page_number, page in enumerate(pdf.pages, start=1):
+        if page_number!=14:continue
 
         sizer=dict()
 
         page_height = page.height
-        header_limit = page_height * 0.08
-        footer_limit = page_height * 0.92
+        header_limit = page_height * 0.02
+        footer_limit = page_height * 0.98
         
         print(f"\n--- Page {page_number} ---")
 
@@ -34,33 +35,52 @@ with pdfplumber.open(pdf_path) as pdf:
                 sizer[int(size)]=1
                 key.append(int(size))
 
-        # print(sizer)
+        print(sizer)
 
+        b=0
         body=0
         head=0
         for i,j in enumerate(sizer):
-            if sizer[j]>body:body=j
+            if sizer[j]>b:
+                b=sizer[j]
+                body=j
             if j>head:head=j
 
         print(body,head,sep='........')
-
+        ltype=0
+        liney=0
+        gettype=0
         for w in words:
             text = w["text"]
             font = w["fontname"]
             size = w["size"]
             x0 = w["x0"]
-            top = w["top"]
-            # print(font)cl
+            top = int(w["top"])
+            if liney==0:
+                liney=top
+                gettype=1
+
+            # print(font,size,sep=">>>>")
             if not (header_limit < w["top"] < footer_limit):
                 continue
             if int(size)<5:continue
-            
-            if int(size)==body:
+
+            if top!=liney:
+                print()
+                gettype=1
+            if ('Bold' in font) and ltype==1:
+                print(f'\x1b[032m{text}\x1b[0m',end=' ')
+                if gettype==1:ltype=1
+            elif abs(int(size)-body)<=1:
+                if gettype==1:ltype=2
                 print(f'\x1b[031m{text}\x1b[0m',end=' ')
-            elif (int(size)==head or ':' in text or 'Bold' in font):
+            elif (abs(int(size)-head)<=1 or ':' in text):
+                if gettype==1:ltype=1
                 print(f'\x1b[032m{text}\x1b[0m',end=' ')
             else:
+                if gettype==1:ltype=3
                 print(f'\x1b[033m{text}\x1b[0m',end=' ')
+            liney=top
 
         
 
