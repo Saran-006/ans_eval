@@ -1,12 +1,12 @@
 import pdfplumber
 
-pdf_path = "s3.pdf"
+pdf_path = "samples/s3.pdf"
 
 full_content=[]
 
 with pdfplumber.open(pdf_path) as pdf:
     for page_number, page in enumerate(pdf.pages, start=1):
-        if page_number!=14:continue
+        # if page_number!=14:continue
 
         sizer=dict()
 
@@ -68,19 +68,32 @@ with pdfplumber.open(pdf_path) as pdf:
             if top!=liney:
                 print()
                 gettype=1
+            
+            if gettype==1:
+                if ('Bold' in font):
+                    ltype=1
+                elif abs(int(size)-body)<=1:
+                    ltype=2
+                elif (abs(int(size)-head)<=1 or ':' in text):
+                    ltype=1
+                else:ltype=3
+                    
+            
+            
             if ('Bold' in font) and ltype==1:
                 print(f'\x1b[032m{text}\x1b[0m',end=' ')
-                if gettype==1:ltype=1
-            elif abs(int(size)-body)<=1:
-                if gettype==1:ltype=2
+
+            elif abs(int(size)-body)<=1 and ltype!=1:
                 print(f'\x1b[031m{text}\x1b[0m',end=' ')
+
             elif (abs(int(size)-head)<=1 or ':' in text):
-                if gettype==1:ltype=1
                 print(f'\x1b[032m{text}\x1b[0m',end=' ')
             else:
-                if gettype==1:ltype=3
                 print(f'\x1b[033m{text}\x1b[0m',end=' ')
+
+
             liney=top
+            gettype=0
 
         
 
