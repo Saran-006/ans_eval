@@ -1,4 +1,4 @@
-import pdf2txt as pdf
+import notes_rag.pdf2txt as pdf
 
 def chunk_document(formatted_text):
     chunks = []

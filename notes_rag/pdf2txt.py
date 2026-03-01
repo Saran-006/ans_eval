@@ -121,7 +121,7 @@ def get_content_from_pdf(path):
 
 
 if __name__=='__main__':
-    print(get_content_from_pdf('samples/s3.pdf'))
+    print(get_content_from_pdf('../samples/s3.pdf'))
 
             
 

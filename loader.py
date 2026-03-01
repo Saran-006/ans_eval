@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer
 import sys
 
 
-with open("vector_db.pkl", "rb") as f:
+with open("notes_rag/vector_db.pkl", "rb") as f:
     data = pickle.load(f)
 
 chunks = data["chunks"]
@@ -42,4 +42,5 @@ def query_vector_db(query, top_k=3):
 
     return results
 
-print(query_vector_db("What is Interruption Case?"))
+
+print(query_vector_db(input("enter query:")))
