@@ -1,4 +1,16 @@
-import pdfplumber
+import pdfplumber, re
+
+def clean_text(text):
+    # Remove (cid:xxx)
+    text = re.sub(r'\(cid:\d+\)', '', text)
+
+    # Remove non-printable control characters
+    text = re.sub(r'[\x00-\x1F\x7F]', '', text)
+
+    # Normalize whitespace
+    text = re.sub(r'\s+', ' ', text)
+
+    return text.strip()
 
 def get_content_from_pdf(path):
     pdf_path = path
@@ -18,17 +30,15 @@ def get_content_from_pdf(path):
             # print(f"\n--- Page {page_number} ---")
 
             full_content+="\n"
-            full_content+=f'\n--- Page {page_number} ---'
+            full_content+=f'\n[Page]'
             full_content+="\n"
 
 
-            words = page.extract_words(
-                extra_attrs=["fontname", "size"]
-            )
+            words =page.extract_words(extra_attrs=["fontname", "size"])
 
             key=[]
             for w in words:
-                text = w["text"]
+                text = clean_text(w["text"])
                 font = w["fontname"]
                 size = w["size"]
                 x0 = w["x0"]
@@ -57,7 +67,7 @@ def get_content_from_pdf(path):
             liney=0
             gettype=0
             for w in words:
-                text = w["text"]
+                text = clean_text(w["text"])
                 font = w["fontname"]
                 size = w["size"]
                 x0 = w["x0"]
@@ -65,6 +75,7 @@ def get_content_from_pdf(path):
                 if liney==0:
                     liney=top
                     gettype=1
+
 
                 # print(font,size,sep=">>>>")
                 if not (header_limit < w["top"] < footer_limit):
