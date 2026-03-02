@@ -1,6 +1,6 @@
-import notes_rag.chk as chk
+import chk as chk
 
-import notes_rag.pdf2txt as pdf
+import pdf2txt as pdf
 
 import numpy as np
 
@@ -8,7 +8,7 @@ from sentence_transformers import SentenceTransformer
 
 import pickle
 
-content=pdf.get_content_from_pdf('../samples/s3.pdf')
+content=pdf.get_content_from_pdf('../samples/bn1.pdf')
 
 chunks=chk.chunk_text(content)
 

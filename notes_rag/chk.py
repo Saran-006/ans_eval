@@ -1,6 +1,16 @@
 from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-small-en")
 
+def split_body(text):
+    s=[]
+    t=""
+    for i in range(len(text)):
+        t+=text[i]
+        if i%300==0:
+            s.append(t)
+            t=""
+    return s
+
 def count_tokens(text):
     tokens = tokenizer.encode(
         text,
@@ -104,27 +114,40 @@ def chunk_text(content):
 
         body.append(content)
 
-    
-    content=""
+    try:
+        content=""
 
-    for j in lines[heading_map[-1][-1]+1:len(lines)]:
-        if '[Page]' not in j and '[head]' not in j:
-            content+=j.replace("[body]","").strip(" ")+" "
+        for j in lines[heading_map[-1][-1]+1:len(lines)]:
+            if '[Page]' not in j and '[head]' not in j:
+                content+=j.replace("[body]","").strip(" ")+" "
 
-    body.append(content)
+        body.append(content)
+    except:pass
 
+    print(len(heading_tags))
+    id=0
     for i in range(len(heading_map)):
         temp=dict()
-        temp['id']=int(i)
-        temp['title']=heading_tags[i]
-        temp['content']=body[i]
-        temp['token']= count_tokens(body[i])
+        if len(body[i])>300:
+            t=split_body(body[i])
+            for j in t:
+                temp['id']=id
+                temp['title']=heading_tags[i]
+                temp['content']=j
+                temp['token']= count_tokens(body[i])
+        else:
+            temp['id']=id
+            temp['title']=heading_tags[i]
+            temp['content']=body[i]
+            temp['token']= count_tokens(body[i])
         chunks.append(temp)
-
+        id+=1
+    # for i in chunks:print(f'{i['title']}: {i['content']} \n')
     return chunks
 
-
-
+if __name__=='__main__':
+    import pdf2txt as pdf
+    print(chunk_text(pdf.get_content_from_pdf("../samples/bn1.pdf")))
 
 
         

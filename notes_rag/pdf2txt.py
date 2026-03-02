@@ -89,6 +89,9 @@ def get_content_from_pdf(path):
                     if ('Bold' in font):
                         ltype=1
                         full_content+="\n[head]"
+                    elif (re.match(r'^[a-zA-Z0-9]{2,10}[\s:]{1,2}',text)):
+                        ltype=1
+                        full_content+="\n[head]"
                     elif abs(int(size)-body)<=1:
                         ltype=2
                         full_content+="\n[body]"
@@ -117,11 +120,21 @@ def get_content_from_pdf(path):
 
                 liney=top
                 gettype=0
-    return full_content
+    full_content1=""
+    for i in full_content.split('\n'):
+        j=i.strip()
+        # if re.match(r'^\[body\][A-Za-z0-9 ]+?:',text):
+        if ":" in j:
+            # print('passed:')
+            full_content1+=(j.replace("[body]","[head]"))
+        else:full_content1+=j
+        full_content1+="\n"
+    return full_content1
+
 
 
 if __name__=='__main__':
-    print(get_content_from_pdf('../samples/s3.pdf'))
+    print(get_content_from_pdf('../samples/bn1.pdf'))
 
             
 

@@ -76,7 +76,7 @@ def get_content_from_pdf(path):
                     liney=top
 
                 # print(font,size,sep=">>>>")
-
+                
                 if not (header_limit < w["top"] < footer_limit):
                     continue
                 if int(size)<5:continue
