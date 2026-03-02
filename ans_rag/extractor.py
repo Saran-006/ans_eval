@@ -6,7 +6,7 @@ from PIL import Image
 # If Windows, uncomment and adjust path:
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-PDF_PATH = "../samples/swsw.pdf"
+PDF_PATH = "../samples/ansxx.pdf"
 OUTPUT_FOLDER = "static_img"
 
 # Create folder if not exists
@@ -37,7 +37,7 @@ for page_number in range(len(doc)):
 
         # Apply OCR
         img = Image.open(image_filename)
-        text = pytesseract.image_to_string(img)
+        text = pytesseract.image_to_string(img,config="--oem 1 --psm 3")
 
         print(f"\n--- OCR Result for {image_filename} ---")
         print(text)
