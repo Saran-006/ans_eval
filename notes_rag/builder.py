@@ -8,31 +8,35 @@ from sentence_transformers import SentenceTransformer
 
 import pickle
 
-content=pdf.get_content_from_pdf('../samples/bn1.pdf')
+def build_vector_db(path):
+    content=pdf.get_content_from_pdf(path)
 
-chunks=chk.chunk_text(content)
-
-
-model = SentenceTransformer("BAAI/bge-small-en")
+    chunks=chk.chunk_text(content)
 
 
-#
-texts = [
-    "Represent this sentence for retrieval: " +
-    chunk["title"] + " " + chunk["content"]
-    for chunk in chunks
-]
+    model = SentenceTransformer("BAAI/bge-small-en")
 
 
-embeddings = model.encode(texts,batch_size=16,normalize_embeddings=True)
+    #
+    texts = [
+        "Represent this sentence for retrieval: " +
+        chunk["title"] + " " + chunk["content"]
+        for chunk in chunks
+    ]
 
 
-for i, chunk in enumerate(chunks):
-    chunk["embedding"] = embeddings[i]
+    embeddings = model.encode(texts,batch_size=16,normalize_embeddings=True)
 
 
-with open("vector_db.pkl", "wb") as f:
-    pickle.dump({
-        "chunks": chunks,
-        "embeddings": embeddings
-    }, f)
+    for i, chunk in enumerate(chunks):
+        chunk["embedding"] = embeddings[i]
+
+
+    with open("vector_db.pkl", "wb") as f:
+        pickle.dump({
+            "chunks": chunks,
+            "embeddings": embeddings
+        }, f)
+
+if __name__=='__main__':
+    build_vector_db('../samples/bn1.pdf')

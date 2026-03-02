@@ -42,5 +42,5 @@ def query_vector_db(query, top_k=3):
 
     return results
 
-
-print(query_vector_db(input("enter query:")))
+if __name__=='__main__':
+    print(query_vector_db(input("enter query:")))
