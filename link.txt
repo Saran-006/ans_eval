@@ -1,1 +1,3 @@
 https://github.com/UB-Mannheim/tesseract/wiki
+
+python app.py "E:\pro\ans_eval\samples\qp1.pdf" "E:\pro\ans_eval\samples\bn1.pdf"

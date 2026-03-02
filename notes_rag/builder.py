@@ -1,6 +1,6 @@
-import chk as chk
+import notes_rag.chk as chk
 
-import pdf2txt as pdf
+import notes_rag.pdf2txt as pdf
 
 import numpy as np
 

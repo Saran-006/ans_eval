@@ -1,4 +1,4 @@
-import qp2txt as qp
+import qp_rag.qp2txt as qp
 import re
 
 def get_question_from_pdf(path):
