@@ -1,7 +1,6 @@
 import pickle
 import numpy as np
 from sentence_transformers import SentenceTransformer
-import sys
 
 
 with open("notes_rag/vector_db.pkl", "rb") as f:
