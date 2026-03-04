@@ -3,7 +3,7 @@ import time
 import ans_rag.new_ocr as ocr
 import ans_rag.get_img as imager
 
-OPENROUTER_KEY = "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"
+OPENROUTER_KEY = "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"
 MODEL = "openai/gpt-3.5-turbo"
 
 def call_llm(prompt, retries=3):
@@ -22,7 +22,7 @@ def call_llm(prompt, retries=3):
         "messages": [
             {"role": "user", "content": prompt}
         ],
-        "max_tokens": 150
+        "max_tokens": 1500
     }
 
     for attempt in range(retries):
@@ -140,6 +140,8 @@ Do NOT apply this rule if the word is clearly a normal word such as:
 System, Some, Simple, Solution.
 
 strip/remove the line if there is only some garbage texts like the 
+
+and if its a question number then it like x) so we can easy detect them 
 
 In those cases, keep the word unchanged.
 

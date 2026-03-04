@@ -9,12 +9,13 @@ qp="samples/qp1.pdf"
 if sys.argv[1]=="1":
     gt.build_db(notes,db)
 
-ans_txt=gt.get_anstxt(ans)
+ans_txt=gt.get_ans(ans)
 
 ldb=gt.load_db(db)
 
 ak=gt.get_ans_key(gt.get_question(qp),ldb)
 
-print(ak)
-print("\n\n\n","-"*20,"\n\n\n")
 print(ans_txt)
+
+gt.get_mark(ak,ans_txt)
+

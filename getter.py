@@ -3,6 +3,8 @@ import notes_rag.builder as builder
 import notes_rag.loader as loader
 import helper as hlp
 import ans_rag.llm as llm
+import eval_mark.marker as parser
+import eval_mark.eval_prompt as prompter
 
 
 
@@ -40,14 +42,23 @@ def get_ans_key(questions,db):
 
 
 
-def get_anstxt(path):
+def get_ans(path):
 
     ans=llm.get_all_text(path)
     
-    return ans 
+    return parser.ans_parser(ans)
 
+def get_mark(retrival_dict,ans_text):
+    
+    prompts = prompter.build_eval_prompt(retrival_dict, ans_text)
 
+    response=llm.call_llm(prompts)
 
+    print(response)
 
+    # print("----\n",response,"----\n")
 
+    mark=parser.get_score_string(f'{response}')
+
+    print(mark)
 
