@@ -1,20 +1,20 @@
-# import qp_rag.separator as qp
-# import notes_rag.builder as builder
-# import notes_rag.loader as loader
-# import helper as hlp
-# import sys
+import getter as gt
+import sys
 
-# questions=hlp.extract_questions(qp.get_question_from_pdf(sys.argv[1]))
+notes="samples/bn1.pdf"
+db="vector_db/t1.pkl"
+ans="samples/ans1.pdf"
+qp="samples/qp1.pdf"
 
-# builder.build_vector_db(sys.argv[2])
+if sys.argv[1]=="1":
+    gt.build_db(notes,db)
 
+ans_txt=gt.get_anstxt(ans)
 
-# for question in questions:
-#     retrivals=loader.query_vector_db(question)
-#     print()
-#     print(question)
-#     print(retrivals)
+ldb=gt.load_db(db)
 
-import ans_rag.llm as llm
+ak=gt.get_ans_key(gt.get_question(qp),ldb)
 
-llm.get_all_text("samples/test_pgs.pdf")
+print(ak)
+print("\n\n\n","-"*20,"\n\n\n")
+print(ans_txt)

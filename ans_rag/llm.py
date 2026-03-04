@@ -1,11 +1,9 @@
 import requests
-import time
-# import ans_rag.new_ocr as ocr
-# import ans_rag.get_img as imager
-import new_ocr as ocr
-import get_img as imager
+import time 
+import ans_rag.new_ocr as ocr
+import ans_rag.get_img as imager
 
-OPENROUTER_KEY = "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"
+OPENROUTER_KEY = "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"
 MODEL = "openai/gpt-3.5-turbo"
 
 def call_llm(prompt, retries=3):
@@ -150,7 +148,8 @@ OCR TEXT:
 """
 
     corrected = call_llm(prompt)
-    print(corrected)
+    
+    return corrected
 
 
 
@@ -161,7 +160,7 @@ def get_all_text(path):
     for i in images:
         full_text+="[page]\n"+ocr.do_ocr(i)+"\n"
 
-    print("raw ocr :\n\n\n",full_text,"\n\n\n")
+    # print("raw ocr :\n\n\n",full_text,"\n\n\n")
 
     return fix_text(full_text)
 

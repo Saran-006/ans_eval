@@ -8,7 +8,8 @@ from sentence_transformers import SentenceTransformer
 
 import pickle
 
-def build_vector_db(path):
+
+def build_vector_db(path,dbpath):
     content=pdf.get_content_from_pdf(path)
 
     chunks=chk.chunk_text(content)
@@ -32,11 +33,13 @@ def build_vector_db(path):
         chunk["embedding"] = embeddings[i]
 
 
-    with open("vector_db.pkl", "wb") as f:
+    with open(dbpath, "wb") as f:
         pickle.dump({
             "chunks": chunks,
             "embeddings": embeddings
         }, f)
+
+    return dbpath
 
 if __name__=='__main__':
     build_vector_db('../samples/bn1.pdf')

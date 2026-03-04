@@ -1,5 +1,6 @@
 import pdfplumber, re
 
+
 def clean_text(text):
     # Remove (cid:xxx)
     text = re.sub(r'\(cid:\d+\)', '', text)

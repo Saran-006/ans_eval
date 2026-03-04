@@ -124,7 +124,6 @@ def chunk_text(content):
         body.append(content)
     except:pass
 
-    print(len(heading_tags))
     id=0
     for i in range(len(heading_map)):
         temp=dict()
