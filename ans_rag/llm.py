@@ -1,11 +1,11 @@
 import requests
 import time
-# import ocr_model as ocr
-# import doc_ocr as ocr
-import ans_rag.new_ocr as ocr
-import ans_rag.get_img as imager
+# import ans_rag.new_ocr as ocr
+# import ans_rag.get_img as imager
+import new_ocr as ocr
+import get_img as imager
 
-OPENROUTER_KEY = "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"
+OPENROUTER_KEY = "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"
 MODEL = "openai/gpt-3.5-turbo"
 
 def call_llm(prompt, retries=3):
@@ -54,27 +54,96 @@ def call_llm(prompt, retries=3):
 
 def fix_text(ocr_text):
 
-    prompt = fprompt = fprompt = f"""
-You are an OCR correction system for evaluating exam answer sheets.
+    prompt = fprompt = fprompt = f"""You are an OCR correction tool used for processing exam answer sheets.
 
-IMPORTANT RULES:
+Your task is to fix character-level OCR mistakes while keeping the original text intact.
 
-1. You may correct spelling errors.
-2. You may correct obvious OCR character mistakes (example: "7T" → "IT").
-3. You may fix small grammar mistakes (example: "plants makes" → "plants make").
-4. You may replace a word ONLY if it is clearly an OCR mistake.
-5. DO NOT add new information.
-6. DO NOT introduce new concepts or vocabulary.
-7. DO NOT remove repeated answers.
-8. DO NOT merge numbered blocks.
-9. Preserve all numbering exactly as written.
-10. Keep original sentence structure as much as possible.
-11. retain question numbers its crucial for marking
-12. "[page]" means its a splitter tag added by me dont remove it
+Important behavior:
 
-If the same answer appears twice, keep both.
+• Many lines may contain random or meaningless text.
+• Do NOT try to make sentences meaningful.
+• Do NOT rewrite sentences.
+• Do NOT expand phrases.
+• Only fix clear OCR character mistakes.
 
-Return corrected text in the same numbered block format.
+Rules:
+
+1. Correct obvious OCR character errors only.
+   Example:
+   Wwho → Who
+   o(n → on
+   Pyphou → Python
+
+2. Prefer minimal edits. Change the smallest number of characters possible.
+
+3. Never add new words.
+
+4. Never rewrite the sentence.
+
+5. Never guess missing words.
+
+6. Do NOT fix grammar.
+
+7. Question numbers may appear at the beginning of lines.
+
+A line should be treated as numbered ONLY if it starts with something similar to:
+
+[number][.)]
+
+Examples:
+1)
+2.
+15)
+
+8. Some numbers may be malformed OCR characters:
+! → 1
+I → 1
+S → 5
+O → 0
+
+Only fix these when they appear at the start of the line before a bracket or dot.
+
+9. If a line does not match a numbered pattern, keep it unchanged except for clear OCR mistakes.
+
+10. Preserve page markers like "[page]" exactly.
+
+Return the corrected text with the same number of lines and the same structure.
+
+11. OCR may sometimes merge a malformed question number with the first word
+because the separator was lost.
+
+Example OCR mistakes:
+STytsyk → 5) Tytsyk
+ITest → 1) Test
+!Hello → 1) Hello
+
+Explanation:
+The number-like character (S, I, !, O) was originally a question number,
+and the separator like ")" or "." and the space were lost by OCR.
+
+If the very first character of the line resembles a malformed number and
+it is directly attached to the first word, treat it as a question number
+and reconstruct it.
+
+Correction rule:
+[number-like][Word] → [correct number])[space][Word]
+
+Examples:
+STytsyk → 5) Tytsyk
+ITest → 1) Test
+!Answer → 1) Answer
+
+Apply this rule ONLY when:
+• The number-like character appears at the very beginning of the line.
+• It is immediately attached to the first word.
+• It clearly resembles a malformed number.
+
+Do NOT apply this rule if the word is clearly a normal word such as:
+System, Some, Simple, Solution.
+
+strip/remove the line if there is only some garbage texts like the 
+
+In those cases, keep the word unchanged.
 
 OCR TEXT:
 {ocr_text}
@@ -92,10 +161,12 @@ def get_all_text(path):
     for i in images:
         full_text+="[page]\n"+ocr.do_ocr(i)+"\n"
 
+    print("raw ocr :\n\n\n",full_text,"\n\n\n")
+
     return fix_text(full_text)
 
 
 
 
 if __name__ == "__main__":
-    get_all_text("../samples/test_pgs.pdf")
+    get_all_text("../samples/t7.pdf")
