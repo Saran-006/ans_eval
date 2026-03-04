@@ -45,6 +45,7 @@ If the question carries 1 mark:
 - Accept very short answers.
 - If the key concept or correct keyword appears, award full marks.
 - Do not expect full definitions or detailed explanations.
+-try to give full mark in many cases if they got atleast small keypoint
 
 If the question carries 2 marks:
 - Expect one or two correct points or a short explanation.

@@ -1,0 +1,100 @@
+/* ---- design tokens ---- */
+:root {
+  --primary: #4e73df;
+  --secondary: #f8f9fc;
+  --accent: #1cc88a;
+  --dark-text: #343a40;
+  --light-text: #fff;
+}
+
+/* global resets */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #e8f0fe 0%, #f8fbfe 100%);
+  color: var(--dark-text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+h3, h4 {
+  font-weight: 600;
+}
+
+header nav {
+  background: var(--primary);
+}
+
+footer {
+  background: #fff;
+  border-top: 1px solid #dee2e6;
+}
+
+/* card style */
+.subject-card {
+  background: #fff;
+  transition: transform 0.2s, box-shadow 0.2s,
+              border-color 0.2s;
+  border: 1px solid transparent;
+  border-radius: 1rem;
+}
+.subject-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
+  border-color: #dee2e6;
+}
+
+/* buttons */
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #2e59d9;
+  border-color: #2e59d9;
+}
+.btn-success {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+.btn-success:hover {
+  background-color: #17a673;
+}
+
+/* inputs and forms */
+.form-control {
+  border-radius: 0.5rem;
+}
+
+/* tables */
+table.table {
+  background: #fff;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+table.table tbody tr:hover {
+  background-color: #f1f3f5;
+}
+
+/* utilities */
+.text-primary {
+  color: var(--primary) !important;
+}
+.text-accent {
+  color: var(--accent) !important;
+}
+
+/* typography shrink on small screens */
+@media (max-width: 576px) {
+  .card-title {
+    font-size: 1rem;
+  }
+}

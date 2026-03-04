@@ -28,7 +28,7 @@ def extract_img(path="../samples/ansxx.pdf"):
             with open(image_filename, "wb") as f:
                 f.write(image_bytes)
 
-        print(f"Saved: {image_filename}")
+        # print(f"Saved: {image_filename}")
     return images
 
 if __name__=="__main__":

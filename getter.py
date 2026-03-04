@@ -54,7 +54,7 @@ def get_mark(retrival_dict,ans_text):
 
     response=llm.call_llm(prompts)
 
-    print(response)
+    # print(response)
 
     # print("----\n",response,"----\n")
 

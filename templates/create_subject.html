@@ -1,0 +1,37 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="card-title mb-4 text-center">Create New Subject</h4>
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="name" class="form-label">Subject Name</label>
+            <input type="text" class="form-control" id="name" name="name" required value="{{ request.form.name or '' }}">
+          </div>
+          <div class="mb-3">
+            <label for="notes" class="form-label">Reference Notes (PDF)</label>
+            <input type="file" class="form-control" id="notes" name="notes" accept="application/pdf">
+          </div>
+          <div class="mb-3">
+            <label for="question" class="form-label">Question Paper (PDF) <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" id="question" name="question" accept="application/pdf" required>
+          </div>
+          <div class="mb-3">
+            <label for="vectordb_name" class="form-label">Vector DB Name</label>
+            <input type="text" class="form-control" id="vectordb_name" name="vectordb_name" placeholder="enter unique name (will become filename)" required value="{{ request.form.vectordb_name or '' }}">
+            <div class="form-text">Will be saved under <code>vector_db/</code> with a <code>.pkl</code> extension if not provided.</div>
+          </div>
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary px-5">Create Subject</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

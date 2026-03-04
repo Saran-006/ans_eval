@@ -1,0 +1,178 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+  </div>
+</div>
+<div class="row mb-4 align-items-center">
+  <div class="col">
+    <h3 class="mb-0"><i class="fa-solid fa-book"></i> {{ subject.name }}</h3>
+  </div>
+  <div class="col-auto">
+    {% if subject.notes_path %}
+    <a href="{{ url_for('uploaded_file', filename=subject.notes_path) }}" target="_blank" class="btn btn-outline-secondary btn-sm me-1"><i class="fa-solid fa-file-pdf"></i> Notes</a>
+    <button class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="collapse" data-bs-target="#update-notes">Update Notes</button>
+    {% else %}
+    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="collapse" data-bs-target="#upload-notes">Upload Notes</button>
+    {% endif %}
+    
+    {% if subject.question_path %}
+    <a href="{{ url_for('uploaded_file', filename=subject.question_path) }}" target="_blank" class="btn btn-outline-secondary btn-sm me-1"><i class="fa-solid fa-question"></i> Question</a>
+    <button class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="collapse" data-bs-target="#update-question">Update QP</button>
+    {% else %}
+    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="collapse" data-bs-target="#upload-question">Upload QP</button>
+    {% endif %}
+    {% if subject.vector_db_path %}
+    <a href="{{ url_for('serve_vector_db', filename=subject.vector_db_path) }}" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-database"></i> Vector DB</a>
+    {% endif %}
+    <form method="post" action="{{ url_for('delete_subject', subj_id=subject.id) }}" onsubmit="return confirm('Remove this subject and all its evaluations?');" class="d-inline-block ms-2">
+      <button class="btn btn-sm btn-outline-danger" aria-label="Delete subject">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="bi bi-trash me-1">
+          <path d="M5.5 5.5A.5.5 0 0 1 6 6v7a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0V6zM11 6a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0V6z"/>
+          <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.086a1 1 0 0 1 .707.293L7.293 2h1.414l.5-.5A1 1 0 0 1 9.5 1h3a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118z"/>
+        </svg>
+        Delete
+      </button>
+    </form>
+  </div>
+</div>
+<div class="card mb-4 shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Upload Answer Script</h5>
+    <form method="post" action="{{ url_for('upload_script', subj_id=subject.id) }}" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="student_name" class="form-label">Student Name</label>
+        <input type="text" class="form-control" id="student_name" name="student_name" required>
+      </div>
+      <div class="mb-3">
+        <label for="answer_pdf" class="form-label">Answer Sheet (PDF)</label>
+        <input type="file" class="form-control" id="answer_pdf" name="answer_pdf" accept="application/pdf" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Start Evaluation</button>
+    </form>
+  </div>
+</div>
+
+<!-- Collapse forms for updating notes and question paper -->
+{% if subject.notes_path or not subject.notes_path %}
+<div class="collapse mb-4" id="upload-notes">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Upload Notes</h5>
+      <form method="post" action="{{ url_for('upload_notes', subj_id=subject.id) }}" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="notes_file" class="form-label">Notes (PDF)</label>
+          <input type="file" class="form-control" id="notes_file" name="notes_file" accept="application/pdf" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload Notes</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="collapse mb-4" id="update-notes">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Replace Notes</h5>
+      <form method="post" action="{{ url_for('upload_notes', subj_id=subject.id) }}" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="notes_file2" class="form-label">New Notes (PDF)</label>
+          <input type="file" class="form-control" id="notes_file2" name="notes_file" accept="application/pdf" required>
+        </div>
+        <button type="submit" class="btn btn-warning">Replace Notes</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="collapse mb-4" id="upload-question">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Upload Question Paper</h5>
+      <form method="post" action="{{ url_for('upload_question', subj_id=subject.id) }}" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="qp_file" class="form-label">Question Paper (PDF)</label>
+          <input type="file" class="form-control" id="qp_file" name="question_file" accept="application/pdf" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload QP</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="collapse mb-4" id="update-question">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Replace Question Paper</h5>
+      <form method="post" action="{{ url_for('update_question', subj_id=subject.id) }}" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="qp_file2" class="form-label">New Question Paper (PDF)</label>
+          <input type="file" class="form-control" id="qp_file2" name="question_file" accept="application/pdf" required>
+        </div>
+        <button type="submit" class="btn btn-warning">Replace QP</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Previous Evaluations</h5>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Student</th>
+            <th>Score</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ev in evaluations %}
+          <tr>
+            <td>
+              <span id="name-display-{{ ev.id }}">{{ ev.student_name }}</span>
+              <button class="btn btn-sm btn-link p-0 ms-2" data-bs-toggle="collapse" data-bs-target="#rename-form-{{ ev.id }}" aria-label="Edit name">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-10.5 10.5a.5.5 0 0 1-.168.11l-5 1.667a.5.5 0 0 1-.65-.65l1.667-5a.5.5 0 0 1 .11-.168l10.5-10.5zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5z"/>
+                </svg>
+              </button>
+              <div class="collapse mt-2" id="rename-form-{{ ev.id }}">
+                <form method="post" action="{{ url_for('rename_evaluation', eval_id=ev.id) }}" class="input-group input-group-sm">
+                  <input type="text" class="form-control form-control-sm" name="student_name" value="{{ ev.student_name }}" required>
+                  <button class="btn btn-outline-primary btn-sm" type="submit">Rename</button>
+                </form>
+              </div>
+            </td>
+             <td>
+               {% if ev.score is not none %}
+                 <span class="badge bg-success">{{ ev.score }}</span>
+               {% else %}
+                 <span class="badge bg-warning text-dark">-</span>
+               {% endif %}
+             </td>
+             <td>
+               <a href="{{ url_for('show_result', eval_id=ev.id) }}" class="btn btn-sm btn-info">{% if ev.score is none %}Check Error{% else %}View{% endif %}</a>
+               <form method="post" action="{{ url_for('re_eval', eval_id=ev.id) }}" style="display:inline-block;margin-left:6px;">
+                 <button class="btn btn-sm btn-outline-primary">Retry</button>
+               </form>
+              <form method="post" action="{{ url_for('delete_evaluation', eval_id=ev.id) }}" style="display:inline-block;margin-left:6px;" onsubmit="return confirm('Delete this evaluation?');">
+                <button class="btn btn-sm btn-outline-danger" aria-label="Delete evaluation">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="bi bi-trash">
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v7a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0V6zM11 6a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0V6z"/>
+                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.086a1 1 0 0 1 .707.293L7.293 2h1.414l.5-.5A1 1 0 0 1 9.5 1h3a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118z"/>
+                  </svg>
+                </button>
+              </form>
+             </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center">No evaluations yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

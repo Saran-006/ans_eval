@@ -12,3 +12,5 @@ python-doctr
 torchvision
 transformers
 sentence-transformers
+Flask
+Flask_SQLAlchemy
