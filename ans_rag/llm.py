@@ -2,9 +2,10 @@ import requests
 import time
 # import ocr_model as ocr
 # import doc_ocr as ocr
-import new_ocr as ocr
+import ans_rag.new_ocr as ocr
+import ans_rag.get_img as imager
 
-OPENROUTER_KEY = "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"
+OPENROUTER_KEY = "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"
 MODEL = "openai/gpt-3.5-turbo"
 
 def call_llm(prompt, retries=3):
@@ -51,10 +52,7 @@ def call_llm(prompt, retries=3):
     return None
 
 
-def fix_text(path):
-    ocr_text = ocr.do_ocr(path)
-
-    print("OCR:",ocr_text,"\n\n\n")
+def fix_text(ocr_text):
 
     prompt = fprompt = fprompt = f"""
 You are an OCR correction system for evaluating exam answer sheets.
@@ -72,6 +70,7 @@ IMPORTANT RULES:
 9. Preserve all numbering exactly as written.
 10. Keep original sentence structure as much as possible.
 11. retain question numbers its crucial for marking
+12. "[page]" means its a splitter tag added by me dont remove it
 
 If the same answer appears twice, keep both.
 
@@ -85,5 +84,18 @@ OCR TEXT:
     print(corrected)
 
 
+
+
+def get_all_text(path):
+    images=imager.extract_img(path)
+    full_text=""
+    for i in images:
+        full_text+="[page]\n"+ocr.do_ocr(i)+"\n"
+
+    return fix_text(full_text)
+
+
+
+
 if __name__ == "__main__":
-    fix_text("../samples/img9.jpeg")
+    get_all_text("../samples/test_pgs.pdf")
