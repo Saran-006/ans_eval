@@ -58,7 +58,17 @@
     </div>
 
     <div class="text-end mt-3">
-      <a href="{{ url_for('view_subject', subj_id=evaluation.subject_id) }}" class="btn btn-secondary btn-sm">Back to Subject</a>
+      <button class="btn btn-outline-primary btn-sm retry-btn-result" data-eval-id="{{ evaluation.id }}" id="retry-result-btn">
+        <i class="fa-solid fa-arrow-rotate-right"></i> Retry
+      </button>
+      <form method="post" action="{{ url_for('clear_attempts', eval_id=evaluation.id) }}" style="display:inline-block;" onsubmit="return confirm('Clear all attempts and reset the evaluation? This cannot be undone.');">
+        <button class="btn btn-outline-danger btn-sm" type="submit">
+          <i class="fa-solid fa-trash"></i> Clear Attempts
+        </button>
+      </form>
+      <a href="{{ url_for('view_subject', subj_id=evaluation.subject_id) }}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left"></i> Back to Subject
+      </a>
     </div>
   </div>
 </div>
@@ -75,6 +85,42 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const evalId = {{ evaluation.id }};
+  
+  // Handle retry button on result page
+  const retryBtn = document.getElementById('retry-result-btn');
+  if (retryBtn) {
+    retryBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      if (!confirm('Are you sure you want to retry this evaluation?')) {
+        return;
+      }
+      
+      retryBtn.disabled = true;
+      const originalText = retryBtn.innerHTML;
+      retryBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Retrying...';
+      
+      try {
+        const response = await fetch(`/re_eval/${evalId}`, {
+          method: 'POST'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Retry failed: ${response.statusText}`);
+        }
+        
+        // Show success message and redirect back to subject
+        alert('Evaluation retry started. Redirecting...');
+        window.location.href = `/subject/{{ evaluation.subject_id }}`;
+        
+      } catch (error) {
+        console.error('Error:', error);
+        alert(`Error: ${error.message}`);
+        retryBtn.disabled = false;
+        retryBtn.innerHTML = originalText;
+      }
+    });
+  }
   
   // Format answer parsing if it's a dictionary
   const answerContent = document.getElementById('answer-content');

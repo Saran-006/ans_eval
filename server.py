@@ -120,6 +120,36 @@ FROM evaluation_old
 def now():
     return datetime.now(timezone.utc)
 
+def get_highest_score(evaluation):
+    """Get the highest score from evaluation history"""
+    try:
+        history = json.loads(evaluation.eval_history or '[]')
+    except:
+        history = []
+    
+    if not history:
+        return evaluation.score  # Fallback to current score if no history
+    
+    # Extract numeric scores from history
+    scores = []
+    for attempt in history:
+        score_str = attempt.get('score')
+        if score_str and score_str != 'None':
+            try:
+                # Parse "X/Y" format and get numerator
+                numerator = float(score_str.split('/')[0])
+                scores.append(numerator)
+            except:
+                pass
+    
+    if not scores:
+        return evaluation.score
+    
+    # Return highest score in "X/Y" format
+    # Get the corresponding attempt with highest score
+    highest_attempt = max(history, key=lambda x: float(x.get('score', '0').split('/')[0]) if x.get('score') else 0)
+    return highest_attempt.get('score', evaluation.score)
+
 def add_to_eval_history(evaluation, score, result_text):
     """Add an evaluation attempt to the history"""
     try:
@@ -213,6 +243,11 @@ def view_subject(subj_id):
                 print(f"[AUTO LINK] associated question file {fname} with subject {subj.id}")
                 break
     evaluations = Evaluation.query.filter_by(subject_id=subj_id).all()
+    
+    # Compute highest score for each evaluation for display
+    for ev in evaluations:
+        ev.display_score = get_highest_score(ev)
+    
     return render_template('subject.html', subject=subj, evaluations=evaluations)
 
 @app.route('/subject/<int:subj_id>/upload', methods=['POST'])
@@ -542,6 +577,22 @@ def rename_evaluation(eval_id):
     if new_name:
         ev.student_name = new_name
         db.session.commit()
+    return redirect(url_for('view_subject', subj_id=subj_id))
+
+@app.route('/clear_attempts/<int:eval_id>', methods=['POST'])
+def clear_attempts(eval_id):
+    """Clear all evaluation attempts and reset score"""
+    ev = Evaluation.query.get_or_404(eval_id)
+    subj_id = ev.subject_id
+    
+    # Reset evaluation but keep the answer sheet
+    ev.score = None
+    ev.result_text = None
+    ev.answer_parsing = None
+    ev.markings = None
+    ev.eval_history = '[]'  # Clear all attempts
+    
+    db.session.commit()
     return redirect(url_for('view_subject', subj_id=subj_id))
 
 @app.route('/evaluation_status/<int:eval_id>')

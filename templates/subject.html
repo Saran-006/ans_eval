@@ -147,7 +147,9 @@
             </td>
              <td>
                <span id="score-{{ ev.id }}">
-                 {% if ev.score is not none %}
+                 {% if ev.display_score %}
+                   <span class="badge bg-success">{{ ev.display_score }}</span>
+                 {% elif ev.score is not none %}
                    <span class="badge bg-success">{{ ev.score }}</span>
                  {% else %}
                    <span class="badge bg-warning text-dark">Pending</span>

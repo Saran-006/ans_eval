@@ -18,7 +18,14 @@ def build_eval_prompt(retrieval_dict, ans_dict):
 
     which means i want you check only few keypoints
 
+    and if the answer is missing then in feed back only "No answer provided" should be placed 
+    dont use custom feed if the answer is missing in other cases you can use your feedbacks
+
     Evaluation strictness depends on the marks of the question.
+
+    Sometimes the notes maybe incorrect in that case uses anyother source for correcting 
+    and if reference material is wrong then in that case you should focus on giving more mark
+    since its out of syllabus and they wrote something
 
 If max_marks == 1:
 • Only check if the key concept appears.
@@ -26,6 +33,8 @@ If max_marks == 1:
 • Do not require the full textbook definition.
 • If the main idea is present, award full marks.
 • If the idea is partially correct, award 0.5 marks instead of 0.
+for one mark even if a single point gets related then give it more marks 0.5-1
+which means for 1 mark you should check only context dont try to match detailed answers
 
 If max_marks == 2:
 • Expect one or two correct points.
@@ -63,6 +72,7 @@ Rules:
 - Compare the student answer with the reference material.
 - Award marks according to the maximum marks for the question.
 - Partial marks are allowed.
+- If the answer is blank or shows "[BLANK - NO ANSWER PROVIDED]", award 0 marks and set feedback to exactly "No answer provided"
 - If the answer is incorrect give 0.
 - Do not invent information outside the reference material.
 
@@ -85,11 +95,32 @@ Return result in JSON format:
         if not qno:
             continue
 
-        student_answer = ans_dict.get(f"{qno})", "")
+        # Try multiple key formats to handle inconsistent answer dict keys
+        # Try: "1)", "1 ", "1", etc.
+        student_answer = ""
+        
+        # First try exact matches with common patterns
+        for key_format in [f"{qno})", f"{qno} ", f"{qno}", f"{qno}] ", f"{qno}]"]:
+            if key_format in ans_dict:
+                student_answer = ans_dict[key_format]
+                break
+        
+        # If still not found, try more aggressive fuzzy match
+        if not student_answer:
+            qno_stripped = qno.strip()
+            for key in ans_dict.keys():
+                key_stripped = key.strip().rstrip(')').rstrip(']').rstrip(' ')
+                # Extract just the number from key
+                key_num = re.match(r'(\d+)', key_stripped)
+                if key_num and key_num.group(1) == qno_stripped:
+                    student_answer = ans_dict[key]
+                    break
+
+        # print(chunks)
 
         context = ""
         for c in chunks:
-            txt = c.get("content", "").strip()
+            txt = c['content'].strip()
             if txt:
                 context += txt + "\n"
 
@@ -101,7 +132,7 @@ REFERENCE MATERIAL
 {context}
 
 STUDENT ANSWER
-{student_answer}
+{student_answer if student_answer.strip() else "[BLANK - NO ANSWER PROVIDED]"}
 
 ----------------------------------------
 """
