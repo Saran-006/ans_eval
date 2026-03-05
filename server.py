@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import os
 import subprocess
 import sys
+import json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
@@ -37,6 +38,11 @@ class Evaluation(db.Model):
     answer_path = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     result_text = db.Column(db.Text)
+    # detailed evaluation breakdown
+    answer_parsing = db.Column(db.Text)  # parsed answer from student's PDF
+    markings = db.Column(db.Text)  # LLM response with detailed markings (JSON)
+    # history of all evaluation attempts stored as JSON string
+    eval_history = db.Column(db.Text, default='[]')
 
 # create DB if not exists
 # ensure tables are created when the app starts
@@ -76,16 +82,35 @@ CREATE TABLE evaluation (
     answer_path VARCHAR(500),
     created_at DATETIME,
     result_text TEXT,
+    eval_history TEXT DEFAULT '[]',
     FOREIGN KEY(subject_id) REFERENCES subject(id)
 )
 ''')
                 cur.execute('''
-INSERT INTO evaluation (id, subject_id, student_name, score, answer_path, created_at, result_text)
-SELECT id, subject_id, student_name, score, answer_path, created_at, result_text
+INSERT INTO evaluation (id, subject_id, student_name, score, answer_path, created_at, result_text, eval_history)
+SELECT id, subject_id, student_name, score, answer_path, created_at, result_text, '[]'
 FROM evaluation_old
 ''')
                 cur.execute('DROP TABLE evaluation_old')
                 conn.commit()
+        # Check if eval_history column exists
+        cur.execute("PRAGMA table_info(evaluation)")
+        ev_cols = [row[1] for row in cur.fetchall()]
+        if 'eval_history' not in ev_cols:
+            print('adding eval_history column to evaluation table')
+            cur.execute('ALTER TABLE evaluation ADD COLUMN eval_history TEXT DEFAULT "[]"')
+            conn.commit()
+        # Check if answer_parsing and markings columns exist
+        cur.execute("PRAGMA table_info(evaluation)")
+        ev_cols = [row[1] for row in cur.fetchall()]
+        if 'answer_parsing' not in ev_cols:
+            print('adding answer_parsing column to evaluation table')
+            cur.execute('ALTER TABLE evaluation ADD COLUMN answer_parsing TEXT')
+            conn.commit()
+        if 'markings' not in ev_cols:
+            print('adding markings column to evaluation table')
+            cur.execute('ALTER TABLE evaluation ADD COLUMN markings TEXT')
+            conn.commit()
         conn.close()
     except Exception as e:
         # report migration failure for debugging
@@ -94,6 +119,21 @@ FROM evaluation_old
 # utility functions
 def now():
     return datetime.now(timezone.utc)
+
+def add_to_eval_history(evaluation, score, result_text):
+    """Add an evaluation attempt to the history"""
+    try:
+        history = json.loads(evaluation.eval_history or '[]')
+    except:
+        history = []
+    
+    history.append({
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'score': score,
+        'result': result_text[:100] if result_text else None  # Store first 100 chars of result
+    })
+    
+    evaluation.eval_history = json.dumps(history)
 
 @app.context_processor
 def inject_now():
@@ -195,14 +235,23 @@ def upload_script(subj_id):
         db.session.commit()
         return redirect(url_for('view_subject', subj_id=subj.id))
 
-    # perform evaluation synchronously
-    try:
-        print(f'[SYNC EVAL] Starting evaluation for id={eval.id}')
-        evaluate(eval.id)
-        print(f'[SYNC EVAL] Finished evaluation for id={eval.id}')
-    except Exception as e:
-        print(f'[SYNC EVAL] Exception during evaluation id={eval.id}: {e}')
+    # perform evaluation asynchronously in background thread
+    # Start evaluation in background without threading complexity
+    evaluate_sync(eval.id)
+    
     return redirect(url_for('view_subject', subj_id=subj.id))
+
+
+def evaluate_sync(eval_id):
+    """Run evaluation synchronously (blocking but in same request context)"""
+    try:
+        print(f'[EVAL SYNC] Starting evaluation for id={eval_id}', flush=True)
+        evaluate(eval_id)
+        print(f'[EVAL SYNC] Finished evaluation for id={eval_id}', flush=True)
+    except Exception as e:
+        print(f'[EVAL SYNC] Exception during evaluation id={eval_id}: {e}', flush=True)
+        import traceback
+        traceback.print_exc()
 
 
 @app.route('/subject/<int:subj_id>/upload_notes', methods=['POST'])
@@ -284,18 +333,22 @@ def re_eval(eval_id):
         ev.score = None
         db.session.commit()
         return redirect(url_for('view_subject', subj_id=subj.id))
-    try:
-        print(f'[RE EVAL] Starting re-evaluation for id={eval_id}')
-        evaluate(eval_id)
-        print(f'[RE EVAL] Finished re-evaluation for id={eval_id}')
-    except Exception as e:
-        print(f'[RE EVAL] Exception during re-eval {eval_id}: {e}')
+    
+    # Clear the score to show it as processing again
+    ev.score = None
+    db.session.commit()
+    
+    # Run evaluation synchronously
+    evaluate_sync(eval_id)
+    
     return redirect(url_for('view_subject', subj_id=ev.subject_id))
 
 @app.route('/evaluate/<int:eval_id>')
 def evaluate(eval_id):
+    print(f'[EVALUATE] Function called with eval_id={eval_id}', flush=True)
     evaluation = Evaluation.query.get_or_404(eval_id)
     subj = evaluation.subject
+    print(f'[EVALUATE] Found evaluation for student {evaluation.student_name}', flush=True)
 
     # validate required files exist
     if not subj.question_path:
@@ -332,9 +385,10 @@ def evaluate(eval_id):
     flag = '0' if os.path.exists(db_file) else '1'
 
     cmd = [sys.executable, 'app.py', flag, notes_file, db_file, ans_file, qp_file]
-    print(f'[EVAL {eval_id}] Running: {" ".join(cmd)}')
-    print(f'[EVAL {eval_id}] Working dir: {BASE_DIR}')
-    print(f'[EVAL {eval_id}] Files: notes={os.path.exists(notes_file) if notes_file else "(optional)"}, answer={os.path.exists(ans_file)}, qp={os.path.exists(qp_file)}, db={os.path.exists(db_file)}')
+    print(f'[EVAL {eval_id}] Running: {" ".join(cmd)}', flush=True)
+    print(f'[EVAL {eval_id}] Working dir: {BASE_DIR}', flush=True)
+    print(f'[EVAL {eval_id}] Files: notes={os.path.exists(notes_file) if notes_file else "(optional)"}, answer={os.path.exists(ans_file)}, qp={os.path.exists(qp_file)}, db={os.path.exists(db_file)}', flush=True)
+    print(f'[EVAL {eval_id}] About to run subprocess...', flush=True)
 
     try:
         # use subprocess.run with explicit pipes instead of capture_output (unsupported
@@ -355,38 +409,71 @@ def evaluate(eval_id):
         # and short preview to avoid corrupting logs
         out_preview = (out[:400] + '...') if len(out) > 400 else out
         err_preview = (err[:400] + '...') if len(err) > 400 else err
-        print(f'[EVAL {eval_id}] Return code: {result.returncode} | STDOUT len={len(out)} | STDERR len={len(err)}')
-        print(f'[EVAL {eval_id}] STDOUT preview: {repr(out_preview)}')
+        print(f'[EVAL {eval_id}] Return code: {result.returncode} | STDOUT len={len(out)} | STDERR len={len(err)}', flush=True)
+        print(f'[EVAL {eval_id}] STDOUT preview: {repr(out_preview)}', flush=True)
         if err:
-            print(f'[EVAL {eval_id}] STDERR preview: {repr(err_preview)}')
+            print(f'[EVAL {eval_id}] STDERR preview: {repr(err_preview)}', flush=True)
 
-        # Filter out stray lines such as 'None' and empty lines, keep meaningful lines
-        lines = [ln.strip() for ln in out.splitlines() if ln.strip() and ln.strip() != 'None']
-        score_str = lines[-1] if lines else ''
+        # Parse output using || delimiter: ans_text || response || mark
+        delimiter = '||||||||||'
+        parts = out.split(delimiter)
+        
+        ans_parsing = None
+        markings = None
+        score_str = ''
+        
+        if len(parts) >= 3:
+            # Clean up each part
+            ans_parsing = parts[0].strip()
+            markings = parts[1].strip()
+            score_str = parts[2].strip()
+            print(f'[EVAL {eval_id}] Successfully parsed 3 parts using delimiter', flush=True)
+        else:
+            print(f'[EVAL {eval_id}] Warning: Expected 3 parts separated by delimiter, got {len(parts)}', flush=True)
+            # Fallback: try to extract score from last non-empty line
+            lines = [ln.strip() for ln in out.splitlines() if ln.strip() and ln.strip() != 'None']
+            score_str = lines[-1] if lines else ''
 
         if result.returncode != 0:
-            print(f'[EVAL {eval_id}] Process failed with return code {result.returncode}')
+            print(f'[EVAL {eval_id}] Process failed with return code {result.returncode}', flush=True)
             # store concise error info; full logs remain visible in server console if needed
             evaluation.result_text = f'Process failed. STDOUT preview: {out_preview}\nSTDERR preview: {err_preview}'
             evaluation.score = None
+            evaluation.answer_parsing = None
+            evaluation.markings = None
+            add_to_eval_history(evaluation, None, evaluation.result_text)
         else:
             if score_str:
-                print(f'[EVAL {eval_id}] Parsed score string: {repr(score_str)}')
+                print(f'[EVAL {eval_id}] Parsed score string: {repr(score_str)}', flush=True)
                 evaluation.score = score_str
                 evaluation.result_text = f'Score: {score_str}'
+                evaluation.answer_parsing = ans_parsing
+                evaluation.markings = markings
+                add_to_eval_history(evaluation, score_str, evaluation.result_text)
             else:
-                print(f'[EVAL {eval_id}] No score line found in stdout')
+                print(f'[EVAL {eval_id}] No score line found in stdout', flush=True)
                 # on success but no score found, save a short preview for debugging
                 evaluation.score = None
                 evaluation.result_text = f'No score found. STDOUT preview: {out_preview}\nSTDERR preview: {err_preview}'
+                evaluation.answer_parsing = ans_parsing
+                evaluation.markings = markings
+                add_to_eval_history(evaluation, None, evaluation.result_text)
     except subprocess.TimeoutExpired:
-        print(f'[EVAL {eval_id}] Subprocess timed out (>300s)')
+        print(f'[EVAL {eval_id}] Subprocess timed out (>300s)', flush=True)
         evaluation.result_text = 'Evaluation timed out (took more than 5 minutes)'
         evaluation.score = None
+        evaluation.answer_parsing = None
+        evaluation.markings = None
+        add_to_eval_history(evaluation, None, evaluation.result_text)
     except Exception as ex:
-        print(f'[EVAL {eval_id}] Exception: {type(ex).__name__}: {ex}')
+        print(f'[EVAL {eval_id}] Exception: {type(ex).__name__}: {ex}', flush=True)
+        import traceback
+        traceback.print_exc()
         evaluation.result_text = f'Error: {type(ex).__name__}: {ex}'
         evaluation.score = None
+        evaluation.answer_parsing = None
+        evaluation.markings = None
+        add_to_eval_history(evaluation, None, evaluation.result_text)
 
     db.session.commit()
     # send back whatever was stored (may be None or text)
@@ -456,6 +543,27 @@ def rename_evaluation(eval_id):
         ev.student_name = new_name
         db.session.commit()
     return redirect(url_for('view_subject', subj_id=subj_id))
+
+@app.route('/evaluation_status/<int:eval_id>')
+def evaluation_status(eval_id):
+    """Check status of an evaluation - used by frontend to poll for updates"""
+    evaluation = Evaluation.query.get_or_404(eval_id)
+    return jsonify({
+        'id': eval_id,
+        'score': evaluation.score,
+        'processing': evaluation.score is None,
+        'result_text': evaluation.result_text
+    })
+
+@app.route('/evaluation_history/<int:eval_id>')
+def get_eval_history(eval_id):
+    """Get full history of an evaluation"""
+    evaluation = Evaluation.query.get_or_404(eval_id)
+    try:
+        history = json.loads(evaluation.eval_history or '[]')
+    except:
+        history = []
+    return jsonify({'history': history})
 
 if __name__ == '__main__':
     app.run(debug=True)

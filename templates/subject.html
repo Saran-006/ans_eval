@@ -40,7 +40,7 @@
 <div class="card mb-4 shadow-sm">
   <div class="card-body">
     <h5 class="card-title">Upload Answer Script</h5>
-    <form method="post" action="{{ url_for('upload_script', subj_id=subject.id) }}" enctype="multipart/form-data">
+    <form id="upload-form" enctype="multipart/form-data">
       <div class="mb-3">
         <label for="student_name" class="form-label">Student Name</label>
         <input type="text" class="form-control" id="student_name" name="student_name" required>
@@ -49,7 +49,7 @@
         <label for="answer_pdf" class="form-label">Answer Sheet (PDF)</label>
         <input type="file" class="form-control" id="answer_pdf" name="answer_pdf" accept="application/pdf" required>
       </div>
-      <button type="submit" class="btn btn-primary">Start Evaluation</button>
+      <button type="submit" class="btn btn-primary" id="submit-btn">Start Evaluation</button>
     </form>
   </div>
 </div>
@@ -146,17 +146,17 @@
               </div>
             </td>
              <td>
-               {% if ev.score is not none %}
-                 <span class="badge bg-success">{{ ev.score }}</span>
-               {% else %}
-                 <span class="badge bg-warning text-dark">-</span>
-               {% endif %}
+               <span id="score-{{ ev.id }}">
+                 {% if ev.score is not none %}
+                   <span class="badge bg-success">{{ ev.score }}</span>
+                 {% else %}
+                   <span class="badge bg-warning text-dark">Pending</span>
+                 {% endif %}
+               </span>
              </td>
              <td>
-               <a href="{{ url_for('show_result', eval_id=ev.id) }}" class="btn btn-sm btn-info">{% if ev.score is none %}Check Error{% else %}View{% endif %}</a>
-               <form method="post" action="{{ url_for('re_eval', eval_id=ev.id) }}" style="display:inline-block;margin-left:6px;">
-                 <button class="btn btn-sm btn-outline-primary">Retry</button>
-               </form>
+               <a href="{{ url_for('show_result', eval_id=ev.id) }}" class="btn btn-sm btn-info view-btn" id="view-btn-{{ ev.id }}">{% if ev.score is none %}Check Error{% else %}View{% endif %}</a>
+               <button class="btn btn-sm btn-outline-primary retry-btn" data-eval-id="{{ ev.id }}">Retry</button>
               <form method="post" action="{{ url_for('delete_evaluation', eval_id=ev.id) }}" style="display:inline-block;margin-left:6px;" onsubmit="return confirm('Delete this evaluation?');">
                 <button class="btn btn-sm btn-outline-danger" aria-label="Delete evaluation">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="bi bi-trash">

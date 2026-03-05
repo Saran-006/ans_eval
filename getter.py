@@ -54,9 +54,9 @@ def get_mark(retrival_dict,ans_text):
 
     response=llm.call_llm(prompts)
 
-    # print(response)
+    print(ans_text,"||||||||||")
 
-    # print("----\n",response,"----\n")
+    print(response,"||||||||||")
 
     mark=parser.get_score_string(f'{response}')
 

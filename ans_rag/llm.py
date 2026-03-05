@@ -3,7 +3,7 @@ import time
 import ans_rag.new_ocr as ocr
 import ans_rag.get_img as imager
 
-OPENROUTER_KEY = "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"
+OPENROUTER_KEY = "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"
 MODEL = "openai/gpt-3.5-turbo"
 
 def call_llm(prompt, retries=3):

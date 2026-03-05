@@ -25,5 +25,5 @@ ak=gt.get_ans_key(gt.get_question(qp),ldb)
 
 # print(ans_txt)
 
-print(gt.get_mark(ak,ans_txt))
+gt.get_mark(ak,ans_txt)
 

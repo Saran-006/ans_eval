@@ -1,8 +1,8 @@
 {% extends 'layout.html' %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card shadow-sm">
+  <div class="col-md-10">
+    <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h4 class="card-title mb-3"><i class="fa-solid fa-star text-accent"></i> Evaluation Result</h4>
         <dl class="row">
@@ -12,11 +12,129 @@
         </dl>
         <hr>
         <p><strong>Details:</strong> {{ evaluation.result_text }}</p>
-        <div class="text-end">
-          <a href="{{ url_for('view_subject', subj_id=evaluation.subject_id) }}" class="btn btn-secondary btn-sm">Back to Subject</a>
+      </div>
+    </div>
+
+    <!-- Answer Parsing -->
+    {% if evaluation.answer_parsing %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-light cursor-pointer" data-bs-toggle="collapse" data-bs-target="#answer-parsing" aria-expanded="false">
+        <h6 class="mb-0"><i class="fa-solid fa-file-lines"></i> Parsed Answer</h6>
+      </div>
+      <div class="collapse" id="answer-parsing">
+        <div class="card-body p-0">
+          <div class="detail-box">
+            <pre id="answer-content">{{ evaluation.answer_parsing }}</pre>
+          </div>
         </div>
       </div>
     </div>
+    {% endif %}
+
+    <!-- Markings Details -->
+    {% if evaluation.markings %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-light cursor-pointer" data-bs-toggle="collapse" data-bs-target="#markings" aria-expanded="false">
+        <h6 class="mb-0"><i class="fa-solid fa-list-check"></i> Marking Details</h6>
+      </div>
+      <div class="collapse" id="markings">
+        <div class="card-body p-0">
+          <div class="detail-box">
+            <pre id="markings-content">{{ evaluation.markings }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Evaluation History -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3"><i class="fa-solid fa-history"></i> Evaluation History</h5>
+        <div id="history-container" class="list-group">
+          <p class="text-muted">Loading history...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-end mt-3">
+      <a href="{{ url_for('view_subject', subj_id=evaluation.subject_id) }}" class="btn btn-secondary btn-sm">Back to Subject</a>
+    </div>
   </div>
 </div>
+
+<style>
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  .cursor-pointer:hover {
+    background-color: #e9ecef !important;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const evalId = {{ evaluation.id }};
+  
+  // Format answer parsing if it's a dictionary
+  const answerContent = document.getElementById('answer-content');
+  if (answerContent) {
+    try {
+      const ansData = eval('(' + answerContent.textContent + ')');
+      if (typeof ansData === 'object') {
+        answerContent.textContent = JSON.stringify(ansData, null, 2);
+      }
+    } catch (e) {
+      // Keep as is if not valid object notation
+    }
+  }
+  
+  // Format JSON if markings content exists
+  const markingsContent = document.getElementById('markings-content');
+  if (markingsContent) {
+    try {
+      const jsonData = JSON.parse(markingsContent.textContent);
+      markingsContent.textContent = JSON.stringify(jsonData, null, 2);
+    } catch (e) {
+      // If not JSON, keep as is
+    }
+  }
+  
+  fetch(`/evaluation_history/${evalId}`)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById('history-container');
+      const history = data.history;
+      
+      if (!history || history.length === 0) {
+        container.innerHTML = '<p class="text-muted">No history available</p>';
+        return;
+      }
+      
+      let html = '';
+      history.forEach((entry, index) => {
+        const date = new Date(entry.timestamp);
+        const timeStr = date.toLocaleString();
+        const score = entry.score ? `<span class="badge bg-success">${entry.score}</span>` : '<span class="badge bg-warning text-dark">Failed</span>';
+        
+        html += `
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+              <h6 class="mb-1">Attempt ${index + 1}</h6>
+              <small class="text-muted">${timeStr}</small>
+            </div>
+            <p class="mb-1"><strong>Score:</strong> ${score}</p>
+            <small class="text-muted">${entry.result}</small>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    })
+    .catch(err => {
+      console.error('Error loading history:', err);
+      document.getElementById('history-container').innerHTML = '<p class="text-danger">Error loading history</p>';
+    });
+});
+</script>
 {% endblock %}
