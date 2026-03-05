@@ -3,7 +3,7 @@ import time
 import ans_rag.new_ocr as ocr
 import ans_rag.get_img as imager
 
-OPENROUTER_KEY = "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"
+OPENROUTER_KEY = "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"
 
 
 MODEL = "openai/gpt-3.5-turbo"

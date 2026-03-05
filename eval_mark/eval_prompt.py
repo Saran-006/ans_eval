@@ -330,6 +330,7 @@ Evaluation rules:
 2 mark questions:
 - Expect 1–2 correct points
 - Partial understanding → 0.5 or 1
+- If it has more than for a 1marks then give full 2 mark
 
 5 mark questions:
 - Expect explanation
