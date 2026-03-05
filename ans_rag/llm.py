@@ -3,10 +3,10 @@ import time
 import ans_rag.new_ocr as ocr
 import ans_rag.get_img as imager
 
-OPENROUTER_KEY = "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"
+OPENROUTER_KEY = "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"
 MODEL = "openai/gpt-3.5-turbo"
 
-def call_llm(prompt, retries=3):
+def call_llm(prompt, retries=3, max_tokens=2000):
 
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -22,27 +22,37 @@ def call_llm(prompt, retries=3):
         "messages": [
             {"role": "user", "content": prompt}
         ],
-        "max_tokens": 1500
+        "max_tokens": 5000  # Now configurable
     }
 
     for attempt in range(retries):
         try:
-            response = requests.post(url, headers=headers, json=payload)
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
 
             if response.status_code == 200:
                 return response.json()["choices"][0]["message"]["content"]
 
             elif response.status_code == 401:
+                print(f"[LLM ERROR] Invalid API key", flush=True)
                 raise Exception("Invalid API key")
 
             elif response.status_code in (429, 500, 502, 503):
-                time.sleep(2)  # retry delay
+                print(f"[LLM RETRY] Status {response.status_code}, retrying...", flush=True)
+                time.sleep(2)
                 continue
 
             else:
+                print(f"[LLM ERROR] Status {response.status_code}: {response.text[:200]}", flush=True)
                 raise Exception(f"API Error {response.status_code}: {response.text}")
 
+        except requests.exceptions.Timeout:
+            print(f"[LLM ERROR] Request timeout on attempt {attempt+1}", flush=True)
+            if attempt == retries - 1:
+                raise Exception("Request timeout after retries")
+            time.sleep(2)
+            
         except Exception as e:
+            print(f"[LLM ERROR] Attempt {attempt+1}: {str(e)[:100]}", flush=True)
             if attempt == retries - 1:
                 raise e
             time.sleep(2)
@@ -52,7 +62,7 @@ def call_llm(prompt, retries=3):
 
 def fix_text(ocr_text):
 
-    prompt = fprompt = fprompt = f"""You are an OCR correction tool used for processing exam answer sheets.
+    prompt = f"""You are an OCR correction tool used for processing exam answer sheets.
 
 Your task is to fix character-level OCR mistakes while keeping the original text intact.
 
@@ -149,7 +159,8 @@ OCR TEXT:
 {ocr_text}
 """
 
-    corrected = call_llm(prompt)
+    # Use lower max_tokens for OCR fixing (1000 instead of 4000)
+    corrected = call_llm(prompt, max_tokens=1000)
     
     return corrected
 

@@ -45,6 +45,8 @@ def get_ans_key(questions,db):
 def get_ans(path):
 
     ans=llm.get_all_text(path)
+
+    # print(ans)
     
     return parser.ans_parser(ans)
 
@@ -52,7 +54,10 @@ def get_mark(retrival_dict,ans_text):
     
     prompts = prompter.build_eval_prompt(retrival_dict, ans_text)
 
-    response=llm.call_llm(prompts)
+    # Use higher max_tokens for evaluation (need more tokens for full JSON response)
+    response=llm.call_llm(prompts, max_tokens=3000)
+
+    # print(prompts,"\n\n\n\n")
 
     print(ans_text,"||||||||||")
 

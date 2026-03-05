@@ -12,7 +12,7 @@ try:
 except:
     notes="samples/bn1.pdf"
     db="vector_db/t1.pkl"
-    ans="samples/ans1.pdf"
+    ans="samples/ans2.pdf"
     qp="samples/qp1.pdf"
 
 

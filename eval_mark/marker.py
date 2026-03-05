@@ -42,7 +42,8 @@ def get_score_string(llm_json):
     data = json.loads(llm_json)
 
     scored = sum(q.get("awarded_marks", 0) for q in data)
-    # Only count max_marks for questions that have an answer (awarded_marks > 0 or feedback indicates answer attempt)
-    total = sum(q.get("max_marks", 0) for q in data if q.get("awarded_marks", 0) > 0 or "No answer provided" not in q.get("feedback", ""))
+    # Only count max_marks for questions that have an ACTUAL answer
+    # i.e., feedback is NOT "No answer provided"
+    total = sum(q.get("max_marks", 0) for q in data if q.get("feedback", "") != "No answer provided")
 
     return f"{scored}/{total}"
