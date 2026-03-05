@@ -3,7 +3,7 @@ import time
 import ans_rag.new_ocr as ocr
 import ans_rag.get_img as imager
 
-OPENROUTER_KEY = "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"
+OPENROUTER_KEY = "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"
 MODEL = "openai/gpt-3.5-turbo"
 
 def call_llm(prompt, retries=3, max_tokens=2000):
@@ -22,7 +22,7 @@ def call_llm(prompt, retries=3, max_tokens=2000):
         "messages": [
             {"role": "user", "content": prompt}
         ],
-        "max_tokens": 5000  # Now configurable
+        "max_tokens": max_tokens  # Use the parameter passed in
     }
 
     for attempt in range(retries):
@@ -159,10 +159,17 @@ OCR TEXT:
 {ocr_text}
 """
 
-    # Use lower max_tokens for OCR fixing (1000 instead of 4000)
-    corrected = call_llm(prompt, max_tokens=1000)
+    try:
+        # Use very low max_tokens for OCR fixing to save credits (500 tokens)
+        corrected = call_llm(prompt, max_tokens=500)
+        if corrected:
+            return corrected
+    except Exception as e:
+        print(f"[OCR FIX] Warning: OCR correction failed ({str(e)[:50]}), using raw text", flush=True)
     
-    return corrected
+    # If OCR fixing fails, return the original text as-is
+    # Better to use raw OCR than to fail completely
+    return ocr_text
 
 
 
