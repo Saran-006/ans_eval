@@ -14,7 +14,7 @@ def ans_parser(text):
 
         line = line.strip()
 
-        m = re.match(r'^([0-9]+[)\]}\s])\s*(.*)', line)
+        m = re.match(r'^([0-9]+[)\]}\.\s:-])\s*(.*)', line)
 
         if m:
             if num is not None:
@@ -43,7 +43,7 @@ def get_score_string(llm_json):
 
     scored = sum(q.get("awarded_marks", 0) for q in data)
     # Only count max_marks for questions that have an ACTUAL answer
-    # i.e., feedback is NOT "No answer provided"
-    total = sum(q.get("max_marks", 0) for q in data if q.get("feedback", "") != "No answer provided")
+    # i.e., feedback is NOT "No answer provided" (handle with or without period)
+    total = sum(q.get("max_marks", 0) for q in data if q.get("feedback", "").strip().lower() not in ("no answer provided", "no answer provided."))
 
     return f"{scored}/{total}"

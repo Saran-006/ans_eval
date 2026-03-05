@@ -616,5 +616,38 @@ def get_eval_history(eval_id):
         history = []
     return jsonify({'history': history})
 
+@app.route('/delete_attempt/<int:eval_id>/<int:attempt_index>', methods=['POST'])
+def delete_attempt(eval_id, attempt_index):
+    """Delete a specific evaluation attempt"""
+    ev = Evaluation.query.get_or_404(eval_id)
+    
+    try:
+        history = json.loads(ev.eval_history or '[]')
+    except:
+        history = []
+    
+    # Check if attempt index is valid
+    if attempt_index < 0 or attempt_index >= len(history):
+        return jsonify({'success': False, 'error': 'Invalid attempt index'}), 400
+    
+    # Remove the attempt
+    history.pop(attempt_index)
+    ev.eval_history = json.dumps(history)
+    
+    # If all attempts deleted, reset the score
+    if len(history) == 0:
+        ev.score = None
+        ev.result_text = None
+        ev.answer_parsing = None
+        ev.markings = None
+    else:
+        # Update score to highest remaining attempt
+        highest_score = max(history, key=lambda x: float(x.get('score', '0').split('/')[0]) if x.get('score') else 0)
+        ev.score = highest_score.get('score')
+        ev.result_text = highest_score.get('result')
+    
+    db.session.commit()
+    return jsonify({'success': True, 'history': history})
+
 if __name__ == '__main__':
     app.run(debug=True)
