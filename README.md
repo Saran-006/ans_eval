@@ -43,11 +43,14 @@ src/
 └── utils/           Pipeline helper
 
 app.py               background eval worker
+config.py            all tunables (API key, model, thresholds)
 server.py            Flask server
 data.db              SQLite results
 vector_db/           per-subject embeddings (pickle)
 uploads/             all files uploaded (questions, notes, answers)
 ```
+
+All tunables (API key, model name, chunk size, retrieval top-k, token limits) live in `config.py` — change anything there without touching the pipeline code.
 
 ---
 
