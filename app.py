@@ -1,4 +1,4 @@
-import getter as gt
+import src.utils.getter as gt
 import sys
 
 
