@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import json
+import config
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
@@ -435,7 +436,7 @@ def evaluate(eval_id):
             stderr=subprocess.PIPE,
             text=True,
             cwd=BASE_DIR,
-            timeout=300,
+            timeout=config.EVAL_SUBPROCESS_TIMEOUT,
         )
         out = result.stdout or ''
         err = result.stderr or ''
@@ -450,7 +451,7 @@ def evaluate(eval_id):
             print(f'[EVAL {eval_id}] STDERR preview: {repr(err_preview)}', flush=True)
 
         # Parse output using || delimiter: ans_text || response || mark
-        delimiter = '||||||||||'
+        delimiter = config.OUTPUT_DELIMITER
         parts = out.split(delimiter)
         
         ans_parsing = None

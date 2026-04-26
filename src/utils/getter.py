@@ -5,6 +5,7 @@ import src.utils.helper as hlp
 import src.ans_rag.llm as llm
 import src.eval_mark.marker as parser
 import src.eval_mark.eval_prompt as prompter
+import config
 
 
 
@@ -55,13 +56,13 @@ def get_mark(retrival_dict,ans_text):
     prompts = prompter.build_eval_prompt(retrival_dict, ans_text)
 
     # Use higher max_tokens for evaluation (need more tokens for full JSON response)
-    response=llm.call_llm(prompts, max_tokens=3000)
+    response=llm.call_llm(prompts, max_tokens=config.LLM_MAX_TOKENS_EVAL)
 
     # print(prompts,"\n\n\n\n")
 
-    print(ans_text,"||||||||||")
+    print(ans_text,config.OUTPUT_DELIMITER)
 
-    print(response,"||||||||||")
+    print(response,config.OUTPUT_DELIMITER)
 
     mark=parser.get_score_string(f'{response}')
 

@@ -1,8 +1,9 @@
 import pickle
 import numpy as np
 from sentence_transformers import SentenceTransformer
+import config
 
-model = SentenceTransformer("BAAI/bge-small-en")
+model = SentenceTransformer(config.EMBEDDING_MODEL)
 
 class db_container:
     chunks=None
@@ -26,7 +27,7 @@ def load_db(path):
 
 
 
-def query_vector_db(query,db,top_k=3):
+def query_vector_db(query,db,top_k=config.RETRIEVAL_TOP_K):
 
     chunks=db.chunks
 

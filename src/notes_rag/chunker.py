@@ -1,12 +1,13 @@
 from transformers import AutoTokenizer
-tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-small-en")
+import config
+tokenizer = AutoTokenizer.from_pretrained(config.EMBEDDING_MODEL)
 
 def split_body(text):
     s=[]
     t=""
     for i in range(len(text)):
         t+=text[i]
-        if i%300==0:
+        if i%config.CHUNK_SPLIT_THRESHOLD==0:
             s.append(t)
             t=""
     return s
@@ -127,7 +128,7 @@ def chunk_text(content):
     id=0
     for i in range(len(heading_map)):
         temp=dict()
-        if len(body[i])>300:
+        if len(body[i])>config.CHUNK_SPLIT_THRESHOLD:
             t=split_body(body[i])
             for j in t:
                 temp['id']=id

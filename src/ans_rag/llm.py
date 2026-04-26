@@ -2,25 +2,21 @@ import requests
 import time 
 import src.ans_rag.ocrModel as ocr
 import src.ans_rag.imgExtractor as imager
+import config
 
-OPENROUTER_KEY = "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"
+def call_llm(prompt, retries=config.LLM_RETRIES, max_tokens=config.LLM_MAX_TOKENS_DEFAULT):
 
-
-MODEL = "openai/gpt-3.5-turbo"
-
-def call_llm(prompt, retries=3, max_tokens=2000):
-
-    url = "https://openrouter.ai/api/v1/chat/completions"
+    url = config.OPENROUTER_URL
 
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_KEY}",
+        "Authorization": f"Bearer {config.OPENROUTER_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "http://localhost",
         "X-Title": "OCR Fixer"
     }
 
     payload = {
-        "model": MODEL,
+        "model": config.LLM_MODEL,
         "messages": [
             {"role": "user", "content": prompt}
         ],
@@ -162,8 +158,8 @@ OCR TEXT:
 """
 
     try:
-        # Use very low max_tokens for OCR fixing to save credits (500 tokens)
-        corrected = call_llm(prompt, max_tokens=500)
+        # Use very low max_tokens for OCR fixing to save credits
+        corrected = call_llm(prompt, max_tokens=config.LLM_MAX_TOKENS_OCR)
         if corrected:
             return corrected
     except Exception as e:

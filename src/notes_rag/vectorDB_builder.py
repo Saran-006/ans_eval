@@ -5,6 +5,7 @@ import src.notes_rag.pdf2txt as pdf
 import numpy as np
 
 from sentence_transformers import SentenceTransformer
+import config
 
 import pickle
 
@@ -15,7 +16,7 @@ def build_vector_db(path,dbpath):
     chunks=chunker.chunk_text(content)
 
 
-    model = SentenceTransformer("BAAI/bge-small-en")
+    model = SentenceTransformer(config.EMBEDDING_MODEL)
 
 
     #
