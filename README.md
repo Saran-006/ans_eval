@@ -1,4 +1,4 @@
-# ans_eval
+# GradeRAG
 
 Built this to fix how RAG systems fetch context — instead of grabbing random chunks, this one reads the document structure first (headings → sections → content) and builds a hierarchy before retrieval. The LLM gets short, relevant, structured context instead of a blob of random text.
 
